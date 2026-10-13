@@ -200,6 +200,8 @@ input[type=time].in{min-height:48px}
 .txb .btn.ghost{color:var(--wine)!important;border-color:color-mix(in srgb,var(--wine) 40%,transparent)!important;background:var(--field)!important}
 .txp{border-radius:22px;padding:12px;margin-bottom:14px}.txp textarea{min-height:240px;font-size:14px;line-height:1.45}.txp .txb{margin:10px 0 0}
 .pv-it i{white-space:pre-line}
+.pv-st{display:inline-block;margin:2px 0 10px;padding:4px 11px;border-radius:99px;font:700 12px var(--f-body);background:color-mix(in srgb,var(--grey) 16%,transparent);color:var(--grey)}
+.pv-st.on{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
 .ebm{padding:4px 14px 10px}
 .ebday{padding:10px 0 12px;border-bottom:1px solid var(--hair);display:flex;flex-direction:column;gap:8px}
 .ebday:last-child{border-bottom:0}
@@ -392,7 +394,7 @@ document.addEventListener("click",function(e){if(!cat||!e.target.closest)return;
   var id=cat.id,nm=cat.title;ROWS=ROWS.filter(function(r){return r.kategoria_id!==id});SET.custom=SET.custom.filter(function(k){return k.id!==id});delete SET.cats[id];["Itallap","Étlap"].forEach(function(t){if(SET.order[t])SET.order[t]=SET.order[t].filter(function(x){return x!==id})});applySet();cat=null;setSave();renderHome();go("home",true);toast(nm+" törölve")}});
 /* category */
 var cat=null;
-function openCat(id,isNew){cat=CAT[id];EBW=null;if(isNew)tOpen[id]=true;$("#c-t").textContent=cat.title;tileRender();renderCat();go("cat");$("#fab").hidden=cat.id==="ebed";if(isNew)setTimeout(function(){var n=$("#t-name");if(n){n.focus();n.select()}},450)}
+function openCat(id,isNew){cat=CAT[id];EBW=null;if(isNew)tOpen[id]=true;$("#c-t").textContent=cat.title;tileRender();renderCat();go("cat");if(isNew)setTimeout(function(){var n=$("#t-name");if(n){n.focus();n.select()}},450)}
 $("#back").onclick=function(){renderHome();go("home",true)};
 var GRIP='<svg viewBox="0 0 24 24" class="i"><path d="M5 8h14M5 12h14M5 16h14"/></svg>';
 function heads(gi){var g=cat.groups[gi];return g.heads.length?g.heads:(g.sub?[g.sub]:[])}
@@ -500,7 +502,14 @@ $("#e-save").onclick=function(){var n=$("#e-n").value.trim();if(!n){$("#e-n").fo
 $("#e-del").onclick=function(){var b=this;if(E._new){closeE();return}if(!b.dataset.sure){b.dataset.sure=1;b.textContent="Biztosan?";setTimeout(function(){delete b.dataset.sure;if(E)b.textContent="Törlés"},2500);return}
  delete b.dataset.sure;var nm=E.nev;ROWS=ROWS.filter(function(x){return x!==E});closeE();renderCat();save();toast(nm+" törölve")};
 /* preview */
-$("#fab").onclick=function(){$("#pv-t").textContent=cat.title;var pv=$("#pv");pv.innerHTML="";cat.groups.forEach(function(g,gi){var its=items(cat.id,gi).filter(function(r){return!r.rejtett});if(!its.length)return;
+function ebedPv(){var e=EB(),w=ebW(),W=e.weeks[w]||{},E=SET.ebed||{},n=nowBp(),cur=mondayOf(todayStr()),on=e.days.indexOf(n.d)>-1&&n.m>=e.tf&&n.m<e.tt,pv=$("#pv");$("#pv-t").textContent=cat.title+" · "+wkTxt(w);pv.innerHTML="";
+ function el(t,c,x){var d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d}
+ var st=el("div","pv-st"+(on?" on":""),on?"Most kapható":"Most nem kapható");pv.appendChild(st);
+ var pr=el("div","pv-it");pr.appendChild(el("b","",E.lab_ar||"Bisztró ebéd ára"));pr.appendChild(el("span","p",fmt(e.ar)));pr.appendChild(el("i","",(E.lab_dy||dyAuto(e.days))+" · "+e.tf+"–"+e.tt));pv.appendChild(pr);
+ var any=false;e.days.forEach(function(k){var m=W[k]||{};if(!m.leves&&!m.foetel)return;any=true;var c=el("div","cap",DNF[k]+" · "+hd(addDays(w,k-1))+(w===cur&&k===n.d?" · ma":""));c.style.margin="14px 0 2px";pv.appendChild(c);
+  [[L1(),m.leves],[L2(),m.foetel]].forEach(function(x){if(!x[1])return;var d=el("div","pv-it");d.appendChild(el("b","",x[1]));d.appendChild(el("i","",x[0]));pv.appendChild(d)})});
+ if(!any)pv.appendChild(el("p","muted","Erre a hétre még nincs menü."));go("pv")}
+$("#fab").onclick=function(){if(cat&&cat.id==="ebed"){ebedPv();return}$("#pv-t").textContent=cat.title;var pv=$("#pv");pv.innerHTML="";cat.groups.forEach(function(g,gi){var its=items(cat.id,gi).filter(function(r){return!r.rejtett});if(!its.length)return;
   if(g.name){var c=document.createElement("div");c.className="cap";c.style.margin="12px 0 2px";c.textContent=g.name;pv.appendChild(c)}
   its.forEach(function(r){var d=document.createElement("div");d.className="pv-it"+(r.elfogyott?" off":"");var b=document.createElement("b");b.textContent=r.nev+(r.elfogyott?" · elfogyott":"");var p=document.createElement("span");p.className="p";p.textContent=(nP(gi)===2?[r.ar1,r.ar2]:[r.ar1]).map(fmt).join(" / ");d.appendChild(b);d.appendChild(p);if(r.leiras){var i=document.createElement("i");i.textContent=r.leiras;d.appendChild(i)}pv.appendChild(d)})});go("pv")};
 $("#pvback").onclick=function(){go("cat",true)};
