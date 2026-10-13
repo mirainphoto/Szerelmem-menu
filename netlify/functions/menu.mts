@@ -1,7 +1,7 @@
 import { getStore } from "@netlify/blobs"
 import type { Config, Context } from "@netlify/functions"
 
-const COLS = ["id","lap","kategoria_id","kategoria","csoport_sorszam","csoport","sorrend","nev","leiras","ar1","ar2","allergenek","elfogyott","rejtett","alkoholmentes"]
+const COLS = ["id","lap","kategoria_id","kategoria","csoport_sorszam","csoport","sorrend","nev","leiras","ar1","ar2","allergenek","elfogyott","rejtett","alkoholmentes","tipus"]
 
 function json(o: unknown, status = 200) {
   return new Response(JSON.stringify(o), {
