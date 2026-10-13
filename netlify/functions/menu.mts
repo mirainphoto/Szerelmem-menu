@@ -85,6 +85,38 @@ function cleanSettings(x: any) {
     const f = d(x.heti.from), t = d(x.heti.to)
     if (f || t) out.cats.heti = { ...(out.cats.heti || {}), ...(f ? { from: f } : {}), ...(t ? { to: t } : {}) }
   }
+  if (x.ebed && typeof x.ebed === "object") {
+    const e: any = x.ebed, o: any = {}
+    const tm = (v: unknown) => (typeof v === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : "")
+    const ar = Number(String(e.ar ?? "").replace(/[^\d]/g, ""))
+    if (String(e.ar ?? "") !== "" && Number.isFinite(ar) && ar <= 1000000) o.ar = ar
+    if (tm(e.tf)) o.tf = tm(e.tf)
+    if (tm(e.tt)) o.tt = tm(e.tt)
+    if (Array.isArray(e.days)) {
+      const ds = [...new Set(e.days.map(Number).filter((n: number) => Number.isInteger(n) && n >= 1 && n <= 7))].sort()
+      if (ds.length) o.days = ds
+    }
+    for (const k of ["lab_ar", "lab_dy", "lab1", "lab2"]) { const v = str(e[k], 60); if (v) o[k] = v }
+    const ft = typeof e.foot === "string" ? e.foot.trim().slice(0, 1200) : ""
+    if (ft) o.foot = ft
+    o.weeks = {}
+    if (e.weeks && typeof e.weeks === "object") {
+      const keys = Object.keys(e.weeks).filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort().slice(-104)
+      for (const wk of keys) {
+        const W = e.weeks[wk], ow: any = {}
+        if (!W || typeof W !== "object") continue
+        for (let k = 1; k <= 7; k++) {
+          const m = W[k] ?? W[String(k)]
+          if (m && typeof m === "object") {
+            const l = str(m.leves, 160), f = str(m.foetel, 200)
+            if (l || f) ow[k] = { leves: l, foetel: f }
+          }
+        }
+        if (Object.keys(ow).length) o.weeks[wk] = ow
+      }
+    }
+    out.ebed = o
+  }
   const h = out.cats.heti || {}
   out.heti = { from: h.from || "", to: h.to || "" }
   return out
