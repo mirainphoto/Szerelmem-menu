@@ -722,15 +722,19 @@ q.addEventListener("input",function(){if(q.value.trim())$$(".flt button",kok).fo
 
 (function(){
  var PLUS='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',MINUS='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>',TRASH='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/></svg>';
- var KEY="szb-order",order=[];try{order=JSON.parse(localStorage.getItem(KEY)||"[]")||[]}catch(e){order=[]}
+ var KEY="szb-fav2",OLD="szb-order",order=null,legacy=null;try{order=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){order=null}if(!Array.isArray(order)){order=[];try{legacy=JSON.parse(localStorage.getItem(OLD)||"null")}catch(e){legacy=null}}order=order.filter(function(e){return e&&typeof e.id==="string"&&e.vi>=0&&e.q>0})
  function save(){try{localStorage.setItem(KEY,JSON.stringify(order))}catch(e){}}
- var meta={},secOrder=[];
- $$(".pane .acc").forEach(function(sec,si){var tab=sec.closest("#itallap-pane")?"Italok":"Ételek";secOrder.push(sec.id);
-  $$(".it",sec).forEach(function(li,ii){var id=sec.id+"-"+ii,name=$("b",li).textContent,grp=li.closest(".grp"),vars=[];
+ function mk(li,sec,si,ii,id){var tab=sec.closest("#itallap-pane")?"Italok":"Ételek",name=$("b",li).textContent,grp=li.closest(".grp"),vars=[];
    if(li.classList.contains("fl")){vars=[{v:"",p:$(".gh .pr",grp).textContent}];name=name+" limonádé"}
    else{var cells=$$(".cells .cell",li);if(cells.length){var hs=$$(".gh .cells .cell",grp);cells.forEach(function(c,ci){var pr=$(".pr",c);if(pr)vars.push({v:hs[ci]?hs[ci].textContent:"",p:pr.textContent})})}else vars=[{v:"",p:($(".pr",li)||{}).textContent||""}]}
    if(grp&&grp.classList.contains("limo")&&!/limonádé$/.test(name))name=name+" limonádé";var sub=($(".ds",li)||{}).textContent||"";if(sec.id==="sor"&&sub)vars.forEach(function(x){x.v=sub});
-   meta[id]={id:id,name:name,vars:vars,cat:$(".tt",sec).textContent,sec:sec.id,tab:tab,si:si,ii:ii};
+   return{id:id,name:name,vars:vars,cat:$(".tt",sec).textContent,sec:sec.id,tab:tab,si:si,ii:ii,li:li}}
+ function idOf(li,sec,ii){return li.getAttribute("data-mid")||sec.id+"-"+ii}
+ function refresh(){$$(".pane .acc").forEach(function(sec,si){$$(".it",sec).forEach(function(li,ii){var id=idOf(li,sec,ii);if(meta[id])meta[id]=mk(li,sec,si,ii,id)})})}
+ function vis(e){var m=meta[e.id];return!!(m&&e.q>0&&m.vars[e.vi]&&!m.li.classList.contains("rejt"))}
+ var meta={},secOrder=[],posMap={};
+ $$(".pane .acc").forEach(function(sec,si){var tab=sec.closest("#itallap-pane")?"Italok":"Ételek";secOrder.push(sec.id);
+  $$(".it",sec).forEach(function(li,ii){var pid=sec.id+"-"+ii,id=li.getAttribute("data-mid")||pid;posMap[pid]=id;meta[id]=mk(li,sec,si,ii,id);var name=meta[id].name;
    var b=document.createElement("button");b.type="button";b.className="addb";b.dataset.id=id;b.setAttribute("aria-label",name+" hozzáadása a választásaimhoz");b.innerHTML=PLUS;
    if(li.classList.contains("fl"))li.appendChild(b);else $(".row",li).insertBefore(b,$(".row",li).firstChild);
    b.addEventListener("click",function(e){e.stopPropagation();var m=meta[id];if(m.vars.length>1){var vp=$(".vpick",li);if(vp){vp.remove();return}vp=document.createElement("div");vp.className="vpick";m.vars.forEach(function(x,xi){var o=document.createElement("button");o.type="button";o.textContent=x.v+" · "+x.p;o.onclick=function(){add(id,xi);vp.remove()};vp.appendChild(o)});li.appendChild(vp)}else add(id,0)})})});
@@ -739,15 +743,15 @@ q.addEventListener("input",function(){if(q.value.trim())$$(".flt button",kok).fo
   var f=$("#fav");f.classList.remove("bump");void f.offsetWidth;f.classList.add("bump");
   var m=meta[id];toastMsg("Hozzáadva",m.name+(m.vars[vi].v&&m.vars.length>1?" ("+m.vars[vi].v+")":""))}
  function toastMsg(a,b){var t=$("#toast");t.innerHTML="<b>"+a+"</b><span></span>";t.lastChild.textContent=b;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove("show")},1800)}
- function sync(){order=order.filter(function(e){return meta[e.id]&&e.q>0});var n=order.reduce(function(a,e){return a+e.q},0);
+ function sync(){order=order.filter(function(e){return e.q>0});var n=order.filter(vis).reduce(function(a,e){return a+e.q},0);
   $("#fav-n").hidden=!n;$("#fav-n").textContent=n;
-  $$(".addb").forEach(function(b){var q=order.filter(function(e){return e.id===b.dataset.id}).reduce(function(a,e){return a+e.q},0);b.classList.toggle("in",q>0);b.innerHTML=q?String(q):PLUS});
+  $$(".addb").forEach(function(b){var q=order.filter(function(e){return e.id===b.dataset.id&&vis(e)}).reduce(function(a,e){return a+e.q},0);b.classList.toggle("in",q>0);b.innerHTML=q?String(q):PLUS});
   if(!$("#sheet").hidden)render()}
  var shTab="Italok";
- var UP=[["Desszertek","desszert",null],["Kávék","kave",function(m){var li=$$(".it",document.getElementById(m.sec))[m.ii],g=li&&li.closest(".grp"),l=g&&g.querySelector(".lab");return!l||!/^Extr/.test(l.textContent)}]],upSL={};
- function qOf(f){return order.filter(function(e){return meta[e.id]&&f(meta[e.id])}).reduce(function(a,e){return a+e.q},0)}
+ var UP=[["Desszertek","desszert",null],["Kávék","kave",function(m){var li=m.li,g=li&&li.closest(".grp"),l=g&&g.querySelector(".lab");return!l||!/^Extr/.test(l.textContent)}]],upSL={};
+ function qOf(f){return order.filter(function(e){return vis(e)&&f(meta[e.id])}).reduce(function(a,e){return a+e.q},0)}
  function upsell(L){if(!qOf(function(m){return /^(foetel|eloetel|leves|gyerek|tal|heti)$/.test(m.sec)}))return;var mains=qOf(function(m){return m.sec==="foetel"||m.sec==="gyerek"})+2*qOf(function(m){return m.sec==="tal"}),box=document.createElement("div"),any=false;box.className="sh-up";
-  UP.forEach(function(u,ui){var ids=Object.keys(meta).filter(function(k){var li=$$(".it",document.getElementById(meta[k].sec))[meta[k].ii];return meta[k].sec===u[1]&&(!u[2]||u[2](meta[k]))&&!(li&&(li.classList.contains("rejt")||li.classList.contains("sold")))});
+  UP.forEach(function(u,ui){var ids=Object.keys(meta).filter(function(k){var li=meta[k].li;return meta[k].sec===u[1]&&(!u[2]||u[2](meta[k]))&&!(li&&(li.classList.contains("rejt")||li.classList.contains("sold")))});
    var sel=qOf(function(m){return ids.indexOf(m.id)>-1});if(mains>0&&sel>=mains)return;any=true;
    var p=document.createElement("p");p.className="sh-cat";p.textContent=u[0];box.appendChild(p);
    var row=document.createElement("div");row.className="up-row";row.dataset.k=ui;
@@ -762,8 +766,8 @@ q.addEventListener("input",function(){if(q.value.trim())$$(".flt button",kok).fo
    if(!tgt){g.remove();return}var z=tgt.getBoundingClientRect();tgt.style.visibility="hidden";
    requestAnimationFrame(function(){g.style.transform="translate("+(z.left-a.left)+"px,"+(z.top-a.top)+"px)";g.style.opacity=".15"});
    setTimeout(function(){g.remove();tgt.style.visibility="";tgt.classList.add("up-in")},560)})})();
- function render(){var L=$("#sh-list");$("#sh-ft").hidden=!order.length;if(!order.length){L.innerHTML='<p class="sh-empty">Még üres. Az ételek és italok melletti + jellel adhatsz hozzá.</p>';return}
-  var list=order.slice().sort(function(a,b){var A=meta[a.id],B=meta[b.id];return(A.tab===B.tab?0:A.tab==="Italok"?-1:1)||A.si-B.si||A.ii-B.ii||a.vi-b.vi}),h="",lt="",lc="";
+ function render(){refresh();var vo=order.filter(vis);var L=$("#sh-list");$("#sh-ft").hidden=!vo.length;if(!vo.length){L.innerHTML='<p class="sh-empty">Még üres. Az ételek és italok melletti + jellel adhatsz hozzá.</p>';return}
+  var list=vo.slice().sort(function(a,b){var A=meta[a.id],B=meta[b.id];return(A.tab===B.tab?0:A.tab==="Italok"?-1:1)||A.si-B.si||A.ii-B.ii||a.vi-b.vi}),h="",lt="",lc="";
   var TI={"Italok":'<path d="M7.5 3h9c0 5.5-1.6 8.5-4.5 8.5S7.5 8.5 7.5 3zM12 11.5V20M8 20.5h8"/>',"Ételek":'<path d="M7 3v18M5 3v5a2 2 0 0 0 4 0V3M17 21V3c-2 0-3.5 3-3.5 7.5H17"/>'};
   list.forEach(function(e){var m=meta[e.id],v=m.vars[e.vi];if(m.tab!==lt){if(lc)h+='</div>';if(lt)h+='</div>';h+='<div class="sh-sec"><p class="sh-tab"><span class="ic"><svg class="i" viewBox="0 0 24 24" aria-hidden="true">'+TI[m.tab]+'</svg></span>'+m.tab+'</p>';lt=m.tab;lc=""}if(m.cat!==lc){if(lc)h+='</div>';h+='<div class="sh-grp"><p class="sh-cat">'+m.cat+'</p>';lc=m.cat}
    h+='<div class="sh-r"><div class="tx"><b></b><small>'+(v.v?v.v+" · ":"")+v.p+'</small></div><div class="step"><button type="button" data-k="'+e.id+'|'+e.vi+'" data-d="-1" aria-label="Eggyel kevesebb">'+(e.q>1?MINUS:TRASH)+'</button><span>'+e.q+'</span><button type="button" data-k="'+e.id+'|'+e.vi+'" data-d="1" aria-label="Eggyel több">'+PLUS+'</button></div></div>'});
@@ -784,6 +788,9 @@ q.addEventListener("input",function(){if(q.value.trim())$$(".flt button",kok).fo
  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!$("#sheet").hidden)closeS()});
  $("#sh-clr").addEventListener("click",function(){var b=this;if(!b.classList.contains("sure")){b.classList.add("sure");b.textContent="Biztosan törlöd?";clearTimeout(b._t);b._t=setTimeout(function(){b.classList.remove("sure");b.textContent="Összes törlése"},3000);return}
   order=[];save();sync();b.classList.remove("sure");b.textContent="Összes törlése"});
+ if(legacy&&Array.isArray(legacy)){legacy.forEach(function(e){if(!e||typeof e.id!=="string"||!(e.q>0))return;var mm=e.id.match(/^(.+)-(\d+)$/);if(!mm)return;var mid=posMap[e.id],exp=mm[1]+"-"+("0"+mm[2]).slice(-2);
+   if(mid&&mid===exp&&meta[mid]&&meta[mid].vars[e.vi||0]&&!meta[mid].li.classList.contains("rejt")){var f=find(mid,e.vi||0);if(f)f.q+=e.q;else order.push({id:mid,vi:e.vi||0,q:e.q})}});save();try{localStorage.removeItem(OLD)}catch(_){}}
+ window.__favRefresh=function(){refresh();sync()};
  sync();
 })();
 
@@ -1084,6 +1091,6 @@ window.__szbHeti=heti;
   var pack={rows:d.rows,settings:d.settings||{}},s=JSON.stringify(pack);if(cache&&JSON.stringify({rows:cache.rows,settings:cache.settings||{}})===s){run();return}
   try{localStorage.setItem(KEY,s)}catch(e){}
   try{__szbPatch(d.rows,pack.settings)}catch(e){}
-  if(done){if(window.__reindex)try{__reindex()}catch(e){}}else run()}).catch(function(){run()});
+  if(done){if(window.__reindex)try{__reindex()}catch(e){}if(window.__favRefresh)try{__favRefresh()}catch(e){}}else run()}).catch(function(){run()});
 })();
 </script>
