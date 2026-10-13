@@ -1,4 +1,5 @@
 import { getStore } from "@netlify/blobs"
+import { createHash, randomBytes } from "node:crypto"
 import type { Config, Context } from "@netlify/functions"
 
 const COLS = ["id","lap","kategoria_id","kategoria","csoport_sorszam","csoport","sorrend","nev","leiras","ar1","ar2","allergenek","elfogyott","rejtett","alkoholmentes","tipus"]
@@ -142,13 +143,17 @@ const PERMS = [
 const ALL = PERMS.map((p) => p.k)
 
 const OWNER_LABEL = "Adminisztrátor"
+const hash = (salt: string, p: string) => createHash("sha256").update(salt + "|" + p).digest("hex")
+function pwOk(u: any, given: string) { return u.ph ? hash(u.salt || "", given) === u.ph : !!u.pw && u.pw === given }
+function selfSet(p: string) { const salt = randomBytes(12).toString("hex"); return { pw: "", ph: hash(salt, p), salt } }
+const mask = (u: any, owner: boolean) => { const { ph, salt, ...r } = u; return { ...r, pw: owner && !ph ? u.pw : "", own: !!ph } }
 function auth(body: any, own: { name: string; pw: string }, users: any[]) {
   const name = String(body?.name ?? "").trim()
   const given = String(body?.pw ?? "")
   if (name.toLocaleLowerCase("hu") === own.name.toLocaleLowerCase("hu") && given === own.pw) return { id: "owner", name: OWNER_LABEL, owner: true, main: true, perms: ALL }
   if (!name) return null
   const u = users.find((x) => x.active !== false && String(x.name).toLocaleLowerCase("hu") === name.toLocaleLowerCase("hu"))
-  if (!u || u.pw !== given) return null
+  if (!u || !pwOk(u, given)) return null
   return { id: u.id, name: u.name, owner: false, main: !!u.main, perms: u.main ? ALL : (u.perms || []) }
 }
 function pub(w: any) { return { name: w.name, owner: w.owner, main: w.main, perms: w.perms } }
@@ -259,7 +264,7 @@ export default async (req: Request, context: Context) => {
   }
   if (body.action === "users") {
     if (!boss) return json({ ok: false, error: "nincs_jog" })
-    return json({ ok: true, users: who.owner ? users : users.map((u) => ({ ...u, pw: "" })), perms: PERMS, owner: who.owner ? own : null })
+    return json({ ok: true, users: users.map((u) => mask(u, who.owner)), perms: PERMS, owner: who.owner ? own : null })
   }
   if (body.action === "users_save") {
     if (!boss) return json({ ok: false, error: "nincs_jog" })
@@ -271,9 +276,9 @@ export default async (req: Request, context: Context) => {
       const old0 = users.find((x) => x.id === u?.id)
       if (!who.owner && old0?.main && old0.id !== who.id) { out.push(old0); seen[String(old0.name).toLocaleLowerCase("hu")] = 1; continue }
       const name = String(u?.name ?? "").trim().slice(0, 40)
-      let upw = String(u?.pw ?? "").slice(0, 60)
-      if (!upw && old0 && !who.owner) upw = old0.pw
-      if (!name || !upw) return json({ ok: false, error: "hianyzo_nev_jelszo" })
+      const upw = String(u?.pw ?? "").slice(0, 60)
+      if (!name || (!upw && !old0)) return json({ ok: false, error: "hianyzo_nev_jelszo" })
+      const cred = upw ? { pw: upw, ph: "", salt: "" } : { pw: old0.pw || "", ph: old0.ph || "", salt: old0.salt || "" }
       const key = name.toLocaleLowerCase("hu")
       if (seen[key] || key === own.name.toLocaleLowerCase("hu")) return json({ ok: false, error: "dupla_nev" })
       seen[key] = 1
@@ -282,7 +287,7 @@ export default async (req: Request, context: Context) => {
       if (!who.owner) main = old ? !!old.main : false
       out.push({
         id: typeof u.id === "string" && /^[a-z0-9-]{1,40}$/.test(u.id) ? u.id : "u-" + Date.now().toString(36) + out.length,
-        name, pw: upw, main,
+        name, ...cred, main,
         active: u.active !== false,
         perms: Array.isArray(u.perms) ? u.perms.filter((k: any) => PERMS.some((p) => p.k === k)) : [],
       })
@@ -297,7 +302,7 @@ export default async (req: Request, context: Context) => {
       const o = users.find((x) => x.id === u.id)
       if (!o) { ul.push("Új admin: " + u.name); continue }
       if (o.name !== u.name) ul.push("Admin átnevezve: " + o.name + " → " + u.name)
-      if (o.pw !== u.pw) ul.push(u.name + ": jelszó módosítva")
+      if (o.pw !== u.pw || o.ph !== u.ph) ul.push(u.name + ": jelszó visszaállítva")
       if (!!o.main !== !!u.main) ul.push(u.name + ": " + (u.main ? "fő admin lett" : "már nem fő admin"))
       if ((o.active !== false) !== (u.active !== false)) ul.push(u.name + ": " + (u.active !== false ? "újra beléphet" : "nem léphet be"))
       if (JSON.stringify(o.perms || []) !== JSON.stringify(u.perms || [])) ul.push(u.name + ": jogosultságok módosítva")
@@ -305,7 +310,44 @@ export default async (req: Request, context: Context) => {
     for (const o of users) if (!out.some((x) => x.id === o.id)) ul.push("Admin törölve: " + o.name)
     if (ul.length) log.push({ t: new Date().toISOString(), who: who.name, lines: ul })
     await store.setJSON("log", log)
-    return json({ ok: true, users: who.owner ? out : out.map((u) => ({ ...u, pw: "" })) })
+    return json({ ok: true, users: out.map((u) => mask(u, who.owner)) })
+  }
+  if (body.action === "self_pw") {
+    const np = String(body.newpw ?? "").slice(0, 60)
+    if (np.length < 4) return json({ ok: false, error: "rovid_jelszo" })
+    if (who.owner) await store.setJSON("owner", { name: own.name, pw: np })
+    else {
+      const i = users.findIndex((x) => x.id === who.id)
+      if (i < 0) return json({ ok: false, error: "rossz_jelszo" })
+      users[i] = { ...users[i], ...selfSet(np) }
+      await store.setJSON("users", users)
+    }
+    const log = (((await store.get("log", { type: "json" })) as any[]) ?? []).slice(-499)
+    log.push({ t: new Date().toISOString(), who: who.name, lines: ["Saját jelszó módosítva"] })
+    await store.setJSON("log", log)
+    return json({ ok: true })
+  }
+  if (body.action === "msgs" || body.action === "msg_send" || body.action === "msg_read") {
+    const me = who.owner ? "owner" : who.id
+    let msgs: any[] = ((await store.get("msgs", { type: "json" })) as any[]) ?? []
+    const people = [{ id: "owner", name: OWNER_LABEL }, ...users.filter((u) => u.active !== false).map((u) => ({ id: u.id, name: u.name }))]
+    if (body.action === "msg_send") {
+      const text = String(body.text ?? "").trim().slice(0, 1000)
+      const to = String(body.to ?? "all")
+      if (!text) return json({ ok: false, error: "ures_uzenet" })
+      if (to !== "all" && !people.some((p) => p.id === to)) return json({ ok: false, error: "hibas_keres" })
+      msgs.push({ id: "m-" + Date.now().toString(36) + randomBytes(3).toString("hex"), t: new Date().toISOString(), from: me, fromName: who.name, to, text, read: [me] })
+      msgs = msgs.slice(-400)
+      await store.setJSON("msgs", msgs)
+    }
+    if (body.action === "msg_read") {
+      let ch = false
+      for (const m of msgs) if ((m.to === "all" || m.to === me) && !m.read.includes(me)) { m.read.push(me); ch = true }
+      if (ch) await store.setJSON("msgs", msgs)
+    }
+    const mine = msgs.filter((m) => m.to === "all" || m.to === me || m.from === me)
+    const unread = mine.filter((m) => !m.read.includes(me)).length
+    return json({ ok: true, me, people, unread, msgs: mine.slice(-150).map((m) => ({ id: m.id, t: m.t, from: m.from, fromName: m.fromName, to: m.to, text: m.text, unread: !m.read.includes(me) })) })
   }
   if (body.action === "owner_save") {
     if (!who.owner) return json({ ok: false, error: "nincs_jog" })
