@@ -462,8 +462,8 @@ function ebedCard(){var e=EB(),h='<div class="hcard glass ebc"><div class="hc-t"
  +'<div class="txb"><button type="button" class="btn ghost" id="tx-in">Szöveg beolvasása</button><button type="button" class="btn ghost" id="tx-out">Facebook szöveg</button></div>'
  +'<div class="txp glass" id="txp" hidden><textarea class="in" id="tx-a" rows="12"></textarea><div class="txb"><button type="button" class="btn ghost" id="tx-x">Bezárás</button><button type="button" class="btn" id="tx-go"></button></div></div>';
  h+='<div class="grp glass ebm">';e.days.forEach(function(k){h+='<div class="ebday"><h3><span>'+DNF[k]+'</span><small>'+hd(addDays(w,k-1))+'</small></h3><div class="fld"><label>'+esc(L1())+'</label><input class="in eb-in" data-d="'+k+'" data-k="leves"></div><div class="fld"><label>'+esc(L2())+'</label><input class="in eb-in" data-d="'+k+'" data-k="foetel"></div></div>'});h+='</div>';
- h+='<div class="hcard glass tcard'+(tOpen.ebtx?" open":"")+'" id="ebtx"><button type="button" class="tc-h" id="ebtx-t"><span class="tx"><b>Feliratok</b><small>Ár felirata, napok, sorok neve, Facebook poszt vége</small></span><svg class="i chev" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></button><div class="tc-b">'
-  +'<div class="fld"><label>Ár felirata</label><input class="in eb-lab" data-k="lab_ar" placeholder="Bisztró ebéd ára"></div>'
+ h+='<div class="hcard glass tcard'+(tOpen.ebtx?" open":"")+'" id="ebtx"><button type="button" class="tc-h" id="ebtx-t"><span class="tx"><b>Feliratok</b><small>Ár felirata, napok, sorok neve, Facebook-szöveg</small></span><svg class="i chev" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></svg></button><div class="tc-b">'
+  +'<div class="fld"><label>Ár felirata</label><input class="in eb-lab" data-k="lab_ar" placeholder="Bisztró ebéd"></div>'
   +'<div class="fld"><label>Napok felirata</label><input class="in eb-lab" data-k="lab_dy" placeholder="'+esc(dyAuto(e.days))+'"></div>'
   +'<div class="prs"><div class="fld"><label>1. sor</label><input class="in eb-lab" data-k="lab1" placeholder="Leves"></div><div class="fld"><label>2. sor</label><input class="in eb-lab" data-k="lab2" placeholder="Főétel"></div></div>'
   +'<div class="fld"><label>Facebook poszt vége</label><textarea class="in eb-lab" data-k="foot" rows="7"></textarea></div></div></div>';
@@ -483,7 +483,7 @@ var DUP=["","HÉTFŐ","KEDD","SZERDA","CSÜTÖRTÖK","PÉNTEK","SZOMBAT","VASÁR
 function p2(n){return("0"+n).slice(-2)}
 function md(s){return s.slice(5,7)+"."+s.slice(8,10)}
 function fbText(){var e=EB(),w=ebW(),W=e.weeks[w]||{},L=[];
- L.push("💰  "+((SET.ebed&&SET.ebed.lab_ar)||"Bisztró Ebéd ára")+": "+String(e.ar).replace(/\B(?=(\d{3})+(?!\d))/g," ")+" Ft","","📅 "+md(w)+"–"+md(addDays(w,6))+".","🕚 "+e.tf+"–"+e.tt+" között","");
+ L.push("💰  Bisztró Ebéd ára: "+String(e.ar).replace(/\B(?=(\d{3})+(?!\d))/g," ")+" Ft","","📅 "+md(w)+"–"+md(addDays(w,6))+".","🕚 "+e.tf+"–"+e.tt+" között","");
  e.days.forEach(function(k){var m=W[k]||{};if(!m.leves&&!m.foetel)return;L.push("🍽️ "+DUP[k]);if(m.leves)L.push("🥣 "+m.leves);if(m.foetel)L.push("🍴 "+m.foetel);L.push("")});
  return L.join("\n")+"\n"+((SET.ebed&&SET.ebed.foot)||FOOT_DEF)}
 function clean(l){return l.replace(/[^\p{L}\p{N}\s.,:;()\-–—+\/!?'"%&]/gu,"").replace(/\s+/g," ").trim()}
@@ -520,10 +520,10 @@ $("#e-save").onclick=function(){var n=$("#e-n").value.trim();if(!n){$("#e-n").fo
 $("#e-del").onclick=function(){var b=this;if(E._new){closeE();return}if(!b.dataset.sure){b.dataset.sure=1;b.textContent="Biztosan?";setTimeout(function(){delete b.dataset.sure;if(E)b.textContent="Törlés"},2500);return}
  delete b.dataset.sure;var nm=E.nev;ROWS=ROWS.filter(function(x){return x!==E});closeE();renderCat();save();toast(nm+" törölve")};
 /* preview */
-function ebedPv(){var e=EB(),w=ebW(),W=e.weeks[w]||{},E=SET.ebed||{},n=nowBp(),cur=mondayOf(todayStr()),on=e.days.indexOf(n.d)>-1&&n.m>=e.tf&&n.m<e.tt,pv=$("#pv");$("#pv-t").textContent=cat.title+" · "+wkTxt(w);pv.innerHTML="";
+function ebedPv(){var e=EB(),w=ebW(),W=e.weeks[w]||{},E=SET.ebed||{},n=nowBp(),cur=mondayOf(todayStr()),on=e.days.indexOf(n.d)>-1&&n.m>=e.tf&&n.m<e.tt,pv=$("#pv");$("#pv-t").textContent=cat.title+" · "+(E.lab_dy||dyAuto(e.days))+" · "+wkTxt(w);pv.innerHTML="";
  function el(t,c,x){var d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d}
  pv.classList.add("tight");var st=el("div","pv-st"+(on?" on":""),on?"Most kapható":"Most nem kapható");pv.appendChild(st);
- var pr=el("div","pv-it");pr.appendChild(el("b","",E.lab_ar||"Bisztró ebéd ára"));pr.appendChild(el("span","p",fmt(e.ar)));pr.appendChild(el("i","",(E.lab_dy||dyAuto(e.days))+" · "+e.tf+"–"+e.tt));pv.appendChild(pr);
+ var pr=el("div","pv-it");pr.appendChild(el("b","",E.lab_ar||"Bisztró ebéd"));pr.appendChild(el("span","p",fmt(e.ar)));pr.appendChild(el("i","",e.tf+"–"+e.tt));pv.appendChild(pr);
  var any=false;e.days.forEach(function(k){var m=W[k]||{};if(!m.leves&&!m.foetel)return;any=true;var bx=el("div","pvd");bx.appendChild(el("div","cap",DNF[k]+" · "+hd(addDays(w,k-1))+(w===cur&&k===n.d?" · ma":"")));
   [[L1(),m.leves],[L2(),m.foetel]].forEach(function(x){if(!x[1])return;var r=el("p");r.appendChild(el("small","",x[0]));r.appendChild(el("span","",x[1]));bx.appendChild(r)});pv.appendChild(bx)});
  if(!any)pv.appendChild(el("p","muted","Erre a hétre még nincs menü."));go("pv")}
