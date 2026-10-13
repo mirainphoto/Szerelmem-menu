@@ -217,6 +217,7 @@ body.lvon #fab,body.lvon .saving{display:none!important}
 .pvd .cap{margin:0 0 2px!important;font-size:10px}
 .pvd p{display:flex;gap:8px;margin:1px 0 0;font:600 13.5px/1.25 var(--f-body);color:var(--ink)}
 .pvd p small{flex:none;width:46px;font:700 9px/1.9 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--grey)}
+.owncard{display:flex;flex-direction:column;gap:12px}.owncard[hidden]{display:none}
 .bossrow{display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .isboss .bossrow{display:grid}
 .bossrow .row{border-radius:18px!important;border-top:0!important}
@@ -288,6 +289,9 @@ body.nop-ebed_menu .ebm input{pointer-events:none;opacity:.6}
 
 <section class="scr off-r" id="s-users">
  <div class="top"><button class="rb glass" id="u-back" type="button" aria-label="Vissza"><svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Adminok</h1></div>
+ <div class="hcard glass owncard" id="owncard" hidden><div class="hc-t">Adminisztrátor belépés</div>
+  <div class="hdates"><label class="hrow"><span>Név</span><input class="in" id="o-n" maxlength="40" autocomplete="off"></label><label class="hrow"><span>Jelszó</span><input class="in" id="o-p" maxlength="60" autocomplete="off" autocapitalize="off" spellcheck="false"></label></div>
+  <button class="btn" id="o-save" type="button">Mentés</button></div>
  <div class="list glass" id="ulist"></div>
  <button class="row glass newcat" id="u-new" type="button"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="tx"><b>Új admin</b></span></button>
 </section>
@@ -568,11 +572,13 @@ function reloadData(){load().then(function(d){if(!d.ok)return;ROWS=d.rows.map(no
 var USERS=[],UE=null;
 function uSum(u){if(u.active===false)return"Nem léphet be";if(u.main)return"Fő admin";var n=(u.perms||[]).length;return n?PL.filter(function(p){return u.perms.indexOf(p[0])>-1}).map(function(p){return p[1]}).slice(0,3).join(", ")+(n>3?" +"+(n-3):""):"Nincs jogosultsága"}
 function renderUsers(){var h="";USERS.forEach(function(u,i){h+='<div class="row" role="button" tabindex="0" data-i="'+i+'"><span class="ic">'+esc((u.name||"?").charAt(0).toUpperCase())+'</span><span class="tx"><b></b><small></small></span><span class="upw"></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></div>'});
- $("#ulist").innerHTML=h||'<p class="muted" style="padding:14px">Még nincs külön admin.</p>';$$("#ulist .row").forEach(function(r){var u=USERS[+r.dataset.i];$("b",r).textContent=u.name;$("small",r).textContent=uSum(u);$(".upw",r).textContent=u.pw})}
-function openUsers(){api({action:"users"}).then(function(d){if(!d.ok){toast(ERR[d.error]||"Hiba",true);return}USERS=d.users||[];renderUsers();go("users")})}
+ $("#ulist").innerHTML=h||'<p class="muted" style="padding:14px">Még nincs külön admin.</p>';$$("#ulist .row").forEach(function(r){var u=USERS[+r.dataset.i];$("b",r).textContent=u.name;$("small",r).textContent=uSum(u);$(".upw",r).textContent=WHO&&WHO.owner?u.pw:""})}
+function openUsers(){api({action:"users"}).then(function(d){if(!d.ok){toast(ERR[d.error]||"Hiba",true);return}USERS=d.users||[];renderUsers();var oc=$("#owncard");oc.hidden=!d.owner;if(d.owner){$("#o-n").value=d.owner.name;$("#o-p").value=d.owner.pw}go("users")})}
+$("#o-save").onclick=function(){var n=$("#o-n").value.trim(),pw=$("#o-p").value;if(!n||pw.length<4){toast("Név és legalább 4 karakteres jelszó kell",true);return}
+ api({action:"owner_save",owner:{name:n,pw:pw}}).then(function(d){if(!d.ok){toast(ERR[d.error]||"Mentési hiba",true);return}NAME=d.owner.name;PW=d.owner.pw;try{sessionStorage.setItem("szb-pw",PW);sessionStorage.setItem("szb-un",NAME)}catch(_){}toast("Belépési adatok mentve")})};
 function permBox(u){var h="",g="";PL.forEach(function(p){if(p[2]!==g){if(g)h+='</div>';g=p[2];h+='<div class="cap" style="margin:16px 4px 8px">'+g+'</div><div class="pgrid">'}h+='<button type="button" class="dayb chk pchk" data-k="'+p[0]+'" aria-pressed="'+((u.perms||[]).indexOf(p[0])>-1)+'"><span class="cb"></span>'+p[1]+'</button>'});return h+'</div>'}
 function editUser(i){var u=i==null?{id:"",name:"",pw:"",main:false,active:true,perms:[]}:JSON.parse(JSON.stringify(USERS[i]));UE={i:i,u:u};
- var locked=!WHO.owner&&u.main&&i!=null;$("#u-h").textContent=i==null?"Új admin":u.name;$("#u-n").value=u.name;$("#u-p").value=u.pw;
+ var locked=!WHO.owner&&u.main&&i!=null;$("#u-h").textContent=i==null?"Új admin":u.name;$("#u-n").value=u.name;$("#u-p").value=WHO.owner?u.pw:"";$("label[for=u-p]").textContent=!WHO.owner&&i!=null?"Új jelszó":"Jelszó";
  $("#u-main").setAttribute("aria-checked",!!u.main);$("#u-mainrow").hidden=!WHO.owner;$("#u-act").setAttribute("aria-checked",u.active!==false);
  $("#u-perms").innerHTML=permBox(u);$("#u-perms").hidden=!!u.main;$("#u-del").textContent=i==null?"Mégse":"Törlés";
  $("#usheet").classList.toggle("locked",locked);$("#usheet").classList.add("on");if(i==null)setTimeout(function(){$("#u-n").focus()},400)}
@@ -582,7 +588,7 @@ $("#u-main").onclick=function(){var v=this.getAttribute("aria-checked")!=="true"
 $("#u-act").onclick=function(){this.setAttribute("aria-checked",this.getAttribute("aria-checked")!=="true")};
 $("#u-perms").onclick=function(e){var b=e.target.closest(".pchk");if(b)b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")!=="true")};
 function pushUsers(list,msg){return api({action:"users_save",users:list}).then(function(d){if(!d.ok){toast(ERR[d.error]||"Mentési hiba",true);return false}USERS=d.users;renderUsers();toast(msg);return true})}
-$("#u-save").onclick=function(){if(!UE)return;var u=UE.u;u.name=$("#u-n").value.trim();u.pw=$("#u-p").value;if(!u.name||!u.pw){toast("Név és jelszó kell",true);return}
+$("#u-save").onclick=function(){if(!UE)return;var u=UE.u;u.name=$("#u-n").value.trim();u.pw=$("#u-p").value;if(!u.name||(!u.pw&&(UE.i==null||WHO.owner))){toast("Név és jelszó kell",true);return}
  u.main=$("#u-main").getAttribute("aria-checked")==="true";u.active=$("#u-act").getAttribute("aria-checked")==="true";u.perms=$$("#u-perms .pchk").filter(function(b){return b.getAttribute("aria-pressed")==="true"}).map(function(b){return b.dataset.k});
  var list=USERS.slice();if(UE.i==null)list.push(u);else list[UE.i]=u;pushUsers(list,"Mentve").then(function(ok){if(ok)closeU()})};
 $("#u-del").onclick=function(){var b=this;if(!UE)return;if(UE.i==null){closeU();return}if(!b.dataset.sure){b.dataset.sure=1;b.textContent="Biztosan?";setTimeout(function(){delete b.dataset.sure;if(UE)b.textContent="Törlés"},2500);return}

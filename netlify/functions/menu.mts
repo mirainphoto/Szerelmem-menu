@@ -141,10 +141,11 @@ const PERMS = [
 ]
 const ALL = PERMS.map((p) => p.k)
 
-function auth(body: any, pw: string, users: any[]) {
+const OWNER_LABEL = "Adminisztrátor"
+function auth(body: any, own: { name: string; pw: string }, users: any[]) {
   const name = String(body?.name ?? "").trim()
   const given = String(body?.pw ?? "")
-  if ((!name || name.toLocaleLowerCase("hu") === "tulajdonos") && given === pw) return { id: "owner", name: "Tulajdonos", owner: true, main: true, perms: ALL }
+  if (name.toLocaleLowerCase("hu") === own.name.toLocaleLowerCase("hu") && given === own.pw) return { id: "owner", name: OWNER_LABEL, owner: true, main: true, perms: ALL }
   if (!name) return null
   const u = users.find((x) => x.active !== false && String(x.name).toLocaleLowerCase("hu") === name.toLocaleLowerCase("hu"))
   if (!u || u.pw !== given) return null
@@ -219,9 +220,11 @@ export default async (req: Request, context: Context) => {
   try { body = JSON.parse(await req.text()) } catch { return json({ ok: false, error: "hibas_keres" }, 400) }
 
   const pw = Netlify.env.get("ADMIN_PASSWORD")
-  if (!pw) return json({ ok: false, error: "nincs_jelszo_beallitva" })
+  const ownSaved = ((await store.get("owner", { type: "json" })) as any) ?? {}
+  const own = { name: String(ownSaved.name || "Admin"), pw: String(ownSaved.pw || pw || "") }
+  if (!own.pw) return json({ ok: false, error: "nincs_jelszo_beallitva" })
   const users: any[] = ((await store.get("users", { type: "json" })) as any[]) ?? []
-  const who = auth(body, pw, users)
+  const who = auth(body, own, users)
   if (!who) {
     await new Promise((r) => setTimeout(r, 800))
     return json({ ok: false, error: "rossz_jelszo" })
@@ -256,7 +259,7 @@ export default async (req: Request, context: Context) => {
   }
   if (body.action === "users") {
     if (!boss) return json({ ok: false, error: "nincs_jog" })
-    return json({ ok: true, users, perms: PERMS })
+    return json({ ok: true, users: who.owner ? users : users.map((u) => ({ ...u, pw: "" })), perms: PERMS, owner: who.owner ? own : null })
   }
   if (body.action === "users_save") {
     if (!boss) return json({ ok: false, error: "nincs_jog" })
@@ -268,10 +271,11 @@ export default async (req: Request, context: Context) => {
       const old0 = users.find((x) => x.id === u?.id)
       if (!who.owner && old0?.main && old0.id !== who.id) { out.push(old0); seen[String(old0.name).toLocaleLowerCase("hu")] = 1; continue }
       const name = String(u?.name ?? "").trim().slice(0, 40)
-      const upw = String(u?.pw ?? "").slice(0, 60)
+      let upw = String(u?.pw ?? "").slice(0, 60)
+      if (!upw && old0 && !who.owner) upw = old0.pw
       if (!name || !upw) return json({ ok: false, error: "hianyzo_nev_jelszo" })
       const key = name.toLocaleLowerCase("hu")
-      if (seen[key] || key === "tulajdonos") return json({ ok: false, error: "dupla_nev" })
+      if (seen[key] || key === own.name.toLocaleLowerCase("hu")) return json({ ok: false, error: "dupla_nev" })
       seen[key] = 1
       const old = users.find((x) => x.id === u.id)
       let main = u.main === true
@@ -301,7 +305,19 @@ export default async (req: Request, context: Context) => {
     for (const o of users) if (!out.some((x) => x.id === o.id)) ul.push("Admin törölve: " + o.name)
     if (ul.length) log.push({ t: new Date().toISOString(), who: who.name, lines: ul })
     await store.setJSON("log", log)
-    return json({ ok: true, users: out })
+    return json({ ok: true, users: who.owner ? out : out.map((u) => ({ ...u, pw: "" })) })
+  }
+  if (body.action === "owner_save") {
+    if (!who.owner) return json({ ok: false, error: "nincs_jog" })
+    const name = String(body.owner?.name ?? "").trim().slice(0, 40)
+    const npw = String(body.owner?.pw ?? "").slice(0, 60)
+    if (!name || npw.length < 4) return json({ ok: false, error: "hianyzo_nev_jelszo" })
+    if (users.some((u) => String(u.name).toLocaleLowerCase("hu") === name.toLocaleLowerCase("hu"))) return json({ ok: false, error: "dupla_nev" })
+    await store.setJSON("owner", { name, pw: npw })
+    const log = (((await store.get("log", { type: "json" })) as any[]) ?? []).slice(-499)
+    log.push({ t: new Date().toISOString(), who: OWNER_LABEL, lines: [OWNER_LABEL + " belépési adatai módosítva"] })
+    await store.setJSON("log", log)
+    return json({ ok: true, owner: { name, pw: npw } })
   }
   return json({ ok: false, error: "ismeretlen_muvelet" })
 }
