@@ -118,6 +118,11 @@ function cleanSettings(x: any) {
     }
     out.ebed = o
   }
+  if (x.social && typeof x.social === "object") {
+    const so: any = {}
+    for (const k of ["fb", "ig", "tt", "g"]) { const v = str(x.social[k], 300); if (/^https?:\/\/\S+$/i.test(v)) so[k] = v }
+    out.social = so
+  }
   const h = out.cats.heti || {}
   out.heti = { from: h.from || "", to: h.to || "" }
   return out
@@ -139,6 +144,7 @@ const PERMS = [
   { k: "heti", l: "Heti ajánlat", g: "Külön részek" },
   { k: "ebed_menu", l: "Bisztró ebéd heti menü", g: "Külön részek" },
   { k: "ebed_ar", l: "Bisztró ebéd ára, napjai, ideje", g: "Külön részek" },
+  { k: "social", l: "Közösségi linkek", g: "Külön részek" },
 ]
 const ALL = PERMS.map((p) => p.k)
 
@@ -197,6 +203,7 @@ function diff(pr: any[], nx: any[], ps: any, ns: any) {
     if (!same(a.off, b.off)) { need.push("csempe_rejt"); lines.push("Csempe " + (b.off ? "elrejtve" : "megjelenítve") + ": " + title(id)) }
     if (SCH.some((k) => !same(a[k], b[k]))) { need.push(id === "heti" ? "heti" : "idozites"); lines.push("Időzítés módosítva: " + title(id)) }
   }
+  if (!same(ps.social || {}, ns.social || {})) { need.push("social"); lines.push("Közösségi linkek módosítva") }
   if (!same(ps.order, ns.order)) { need.push("csempe_sorrend"); lines.push("Csempék sorrendje módosítva") }
   const pk = (ps.custom || []).map((c: any) => c.id), nk = (ns.custom || []).map((c: any) => c.id)
   nk.filter((k: string) => !pk.includes(k)).forEach((k: string) => { need.push("kategoria"); lines.push("Új kategória: " + title(k)) })
@@ -335,29 +342,28 @@ export default async (req: Request, context: Context) => {
     let ch = false
     if (body.action === "todo_add") {
       const text = String(body.text ?? "").trim().slice(0, 300)
-      const to = String(body.to ?? "all")
+      const priv = true
+      const to = me
       const due = typeof body.due === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.due) ? body.due : ""
       if (!text) return json({ ok: false, error: "ures_teendo" })
-      if (to !== "all" && !people.some((p) => p.id === to)) return json({ ok: false, error: "hibas_keres" })
-      todos.push({ id: "t-" + Date.now().toString(36) + randomBytes(3).toString("hex"), t: new Date().toISOString(), by: me, byName: who.name, to, text, due, done: null })
+      todos.push({ id: "t-" + Date.now().toString(36) + randomBytes(3).toString("hex"), t: new Date().toISOString(), by: me, byName: who.name, to, text, due, done: null, ...(priv ? { priv: true } : {}) })
       ch = true
     }
     if (body.action === "todo_done") {
-      const t = todos.find((x) => x.id === body.id)
+      const t = todos.find((x) => x.id === body.id && x.by === me)
       if (!t) return json({ ok: false, error: "nincs_ilyen" })
       t.done = body.done ? { by: me, name: who.name, t: new Date().toISOString() } : null
       ch = true
     }
     if (body.action === "todo_del") {
-      const t = todos.find((x) => x.id === body.id)
+      const t = todos.find((x) => x.id === body.id && x.by === me)
       if (!t) return json({ ok: false, error: "nincs_ilyen" })
-      if (t.by !== me && !boss) return json({ ok: false, error: "nincs_jog" })
       todos = todos.filter((x) => x.id !== body.id)
       ch = true
     }
     const kept = todos.filter((x) => !x.done || Date.parse(x.done.t) > cut).slice(-300)
     if (ch || kept.length !== todos.length) await store.setJSON("todos", kept)
-    return json({ ok: true, me, boss, people, todos: kept })
+    return json({ ok: true, me, boss, people, todos: kept.filter((x) => x.by === me) })
   }
   if (body.action === "owner_save") {
     if (!who.owner) return json({ ok: false, error: "nincs_jog" })

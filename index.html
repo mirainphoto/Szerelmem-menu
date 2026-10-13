@@ -496,6 +496,9 @@ foot{display:block}
 .pane:not(.x) .acc.kiem{border-color:color-mix(in srgb,var(--wine) 55%,transparent)!important;box-shadow:inset 0 1px 0 var(--hl),0 0 0 1px color-mix(in srgb,var(--wine) 35%,transparent),var(--sh)!important}
 .acc.kiem .ic{background:var(--wine)!important;color:#fff!important}
 .acc.kiem .cnt{color:var(--wine);font-weight:700}
+.soc{display:flex;justify-content:center;gap:14px;margin:18px 0 6px}.soc[hidden],.soc a[hidden]{display:none}
+.soc a{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(140deg,var(--gl1),var(--gl2));border:1px solid var(--edge);color:var(--wine);box-shadow:inset 0 1px 0 var(--hl),var(--sh);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.soc svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .it .ds{white-space:pre-line}
 .acc.ebed.na h3 button{filter:grayscale(1);opacity:.55}
 .acc.ebed.na .cnt{color:var(--grey)}
@@ -564,7 +567,7 @@ foot{display:block}
   <p class="empty" id="empty" hidden>Erre nincs találat.</p>
 </div>
 
-<footer class="foot"><b>Szerelmem Bisztró</b>és Rendezvényhelyszín<br>2459 Rácalmás, Venyimi út 32. · +36 70 598 8534<div class="hwrow"><button class="hwt" id="hwt" type="button" role="switch" aria-checked="false"><span>Halloween</span><span class="sw" aria-hidden="true"></span></button></div></footer>
+<footer class="foot"><b>Szerelmem Bisztró</b>és Rendezvényhelyszín<br>2459 Rácalmás, Venyimi út 32. · +36 70 598 8534<div class="soc" id="soc" hidden><a id="so-fb" target="_blank" rel="noopener" aria-label="Facebook" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8h2.5V4.5H14A3.5 3.5 0 0 0 10.5 8v2.5H8V14h2.5v6H14v-6h2.5l.5-3.5h-3V8.5a.5.5 0 0 1 .5-.5z"/></svg></a><a id="so-ig" target="_blank" rel="noopener" aria-label="Instagram" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><path d="M16.9 7.1h.01"/></svg></a><a id="so-tt" target="_blank" rel="noopener" aria-label="TikTok" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4c.4 2.6 2 4.2 4.5 4.4v3a7.6 7.6 0 0 1-4.5-1.5v5.6A5 5 0 1 1 9 10.6v3.1a2 2 0 1 0 2 2V4z"/></svg></a><a id="so-g" target="_blank" rel="noopener" aria-label="Google" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 10.5H12v3.2h4.4a4.7 4.7 0 1 1-1.3-5.2l2.3-2.3A8 8 0 1 0 20 12c0-.5 0-1-.4-1.5z"/></svg></a></div><div class="hwrow"><button class="hwt" id="hwt" type="button" role="switch" aria-checked="false"><span>Halloween</span><span class="sw" aria-hidden="true"></span></button></div></footer>
 </main>
 
 <div class="lang" id="lang" role="group" aria-label="Nyelv / Language / Sprache" data-on="hu"><span class="lp" aria-hidden="true"></span><button type="button" data-l="hu" aria-pressed="true" lang="hu">HU</button><button type="button" data-l="en" aria-pressed="false" lang="en">EN</button><button type="button" data-l="de" aria-pressed="false" lang="de">DE</button></div>
@@ -1056,7 +1059,8 @@ function vis(set,data){LAST={s:set,d:data};var C=cats(set),t=today();QA(".pane .
    QA(".ach[data-a]",sec).forEach(function(b){var y=!!have[b.getAttribute("data-a")];b.hidden=!y;if(y)any=true});var af=Q(".afl",sec);if(af)af.hidden=!any}});
  QA(".pane").forEach(function(pn){var v=QA(".acc:not(.rejt)",pn),col=0,prev=null;QA(".acc",pn).forEach(function(x){x.classList.remove("wide")});
   v.forEach(function(x){var o=C[x.id]||{};if(o.size==="hosszu"){x.classList.add("wide");if(col===1&&prev)prev.classList.add("wide");col=0}else col=(col+1)%2;prev=x});if(col===1&&prev)prev.classList.add("wide")});
- heti();ebed(set)}
+ heti();ebed(set);social(set)}
+function social(set){var so=(set&&set.social)||{},any=false;["fb","ig","tt","g"].forEach(function(k){var a=document.getElementById("so-"+k);if(!a)return;var u=so[k];if(u&&/^https?:\/\//i.test(u)){a.href=u;a.hidden=false;any=true}else{a.removeAttribute("href");a.hidden=true}});var b=document.getElementById("soc");if(b)b.hidden=!any}
 var DNF=["","Hétfő","Kedd","Szerda","Csütörtök","Péntek","Szombat","Vasárnap"],DTOL=["","hétfőtől","keddtől","szerdától","csütörtöktől","péntektől","szombattól","vasárnaptól"],DIG=["","hétfőig","keddig","szerdáig","csütörtökig","péntekig","szombatig","vasárnapig"];
 function mondayOf(s){var d=new Date(s+"T12:00:00Z"),w=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()-w+1);return d.toISOString().slice(0,10)}
 function addDays(s,n){var d=new Date(s+"T12:00:00Z");d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)}

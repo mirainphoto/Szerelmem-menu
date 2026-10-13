@@ -217,6 +217,9 @@ body.lvon #fab,body.lvon .saving{display:none!important}
 .pvd .cap{margin:0 0 2px!important;font-size:10px}
 .pvd p{display:flex;gap:8px;margin:1px 0 0;font:600 13.5px/1.25 var(--f-body);color:var(--ink)}
 .pvd p small{flex:none;width:46px;font:700 9px/1.9 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--grey)}
+.socrow{margin-top:10px;border-radius:18px!important;border-top:0!important;display:none!important}
+body:not(.nop-social) .socrow{display:flex!important}
+#td-f{margin:-2px 0 4px}
 .myrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
 .myrow .row{border-radius:18px!important;border-top:0!important;position:relative}
 .mbadge{position:absolute;top:8px;right:10px;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:var(--red);color:#fff;font:700 11.5px/20px var(--f-body);text-align:center}
@@ -291,6 +294,7 @@ body.nop-ebed_menu .ebm input{pointer-events:none;opacity:.6}
  <div class="stats"><div class="stat glass"><b id="st-n">0</b><span>tétel a menüben</span></div><div class="stat glass red"><b id="st-off">0</b><span>elfogyott</span></div></div>
  <div class="seg glass" id="seg" data-on="1"><span class="pill"></span><button type="button" data-t="Itallap" aria-selected="false">Itallap</button><button type="button" data-t="Étlap" aria-selected="true">Étlap</button></div>
  <div class="myrow"><button class="row glass" id="b-todo" type="button"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M4 6.5l1.8 1.8L9 5M4 12.5l1.8 1.8L9 11M4 18.5l1.8 1.8L9 17M12 7h8M12 13h8M12 19h8"/></svg></span><span class="tx"><b>Teendők</b></span><span class="mbadge" id="mbadge" hidden></span></button><button class="row glass" id="b-pw" type="button"><span class="ic"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span><span class="tx"><b>Jelszavam</b></span></button></div>
+ <button class="row glass socrow" id="b-soc" type="button"><span class="ic"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.9l7.6-3.8M8.2 13.1l7.6 3.8"/></svg></span><span class="tx"><b>Közösségi linkek</b></span><svg class="i chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
  <div class="bossrow"><button class="row glass" id="b-users" type="button"><span class="ic"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.8a3.4 3.4 0 0 1 0 6.4M18 14.8c1.9.7 3.1 2.4 3.5 5.2"/></svg></span><span class="tx"><b>Adminok</b></span></button><button class="row glass" id="b-log" type="button"><span class="ic"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7"/></svg></span><span class="tx"><b>Napló</b></span></button></div>
  <div class="cap">Kategóriák</div>
  <div class="list glass" id="cats"></div>
@@ -321,7 +325,7 @@ body.nop-ebed_menu .ebm input{pointer-events:none;opacity:.6}
 
 <section class="scr off-r" id="s-todo">
  <div class="top"><button class="rb glass" id="t-back" type="button" aria-label="Vissza"><svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Teendők</h1></div>
- <div class="tdnew glass"><textarea class="in" id="td-tx" rows="2" maxlength="300"></textarea><div class="lgf" id="td-to"></div><label class="hrow"><span>Határidő</span><input class="in" type="date" id="td-due"></label><button class="btn" id="td-add" type="button">Hozzáadás</button></div>
+ <div class="tdnew glass"><textarea class="in" id="td-tx" rows="2" maxlength="300"></textarea><label class="hrow"><span>Határidő</span><input class="in" type="date" id="td-due"></label><button class="btn" id="td-add" type="button">Hozzáadás</button></div>
  <div id="tdlist"></div>
 </section>
 
@@ -336,6 +340,17 @@ body.nop-ebed_menu .ebm input{pointer-events:none;opacity:.6}
 <div class="lv" id="lv" hidden><div class="lv-top"><button class="rb glass" id="lv-x" type="button" aria-label="Vissza"><svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Így látja a vendég</h1></div><div class="lv-w"><iframe id="lv-f" title="Előnézet"></iframe><div class="lv-ld" id="lv-ld">Betöltés…</div></div></div>
 <div class="saving" id="saving" hidden><span class="dot"></span><span id="sv-t">Mentés…</span></div>
 
+<div class="sheet" id="ssheet"><div class="bg" id="ssbg"></div><div class="pnl">
+ <div class="grab"></div>
+ <div class="sh-h"><h2>Közösségi linkek</h2><button class="rb glass" id="sx" type="button" aria-label="Bezárás"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+ <div class="form">
+  <div class="fld"><label for="s-fb">Facebook</label><input class="in" id="s-fb" type="url" inputmode="url" autocapitalize="off" spellcheck="false"></div>
+  <div class="fld"><label for="s-ig">Instagram</label><input class="in" id="s-ig" type="url" inputmode="url" autocapitalize="off" spellcheck="false"></div>
+  <div class="fld"><label for="s-tt">TikTok</label><input class="in" id="s-tt" type="url" inputmode="url" autocapitalize="off" spellcheck="false"></div>
+  <div class="fld"><label for="s-g">Google</label><input class="in" id="s-g" type="url" inputmode="url" autocapitalize="off" spellcheck="false"></div>
+  <div class="btns"><button class="btn ghost" id="s-no" type="button">Mégse</button><button class="btn" id="s-ok" type="button">Mentés</button></div>
+ </div>
+</div></div>
 <div class="sheet" id="psheet"><div class="bg" id="psbg"></div><div class="pnl">
  <div class="grab"></div>
  <div class="sh-h"><h2>Jelszavam</h2><button class="rb glass" id="px" type="button" aria-label="Bezárás"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -419,7 +434,7 @@ var tab="Étlap";
 S.forEach(function(c){c.t0=c.title;c.ic0=c.icon});
 function co(id){return SET.cats[id]||(SET.cats[id]={})}
 function kiem(c){var o=SET.cats[c.id]||{};return typeof o.kiem==="boolean"?o.kiem:c.id==="heti"}
-function loadSet(x){x=x&&typeof x==="object"?x:{};SET={cats:{},order:{},custom:[]};if(x.ebed&&typeof x.ebed==="object")SET.ebed=JSON.parse(JSON.stringify(x.ebed));
+function loadSet(x){x=x&&typeof x==="object"?x:{};SET={cats:{},order:{},custom:[]};if(x.social&&typeof x.social==="object")SET.social=JSON.parse(JSON.stringify(x.social));if(x.ebed&&typeof x.ebed==="object")SET.ebed=JSON.parse(JSON.stringify(x.ebed));
  if(x.cats&&typeof x.cats==="object")Object.keys(x.cats).forEach(function(k){var v=x.cats[k];if(v&&typeof v==="object")SET.cats[k]=JSON.parse(JSON.stringify(v))});
  if(x.order&&typeof x.order==="object")["Itallap","Étlap"].forEach(function(t){if(Array.isArray(x.order[t]))SET.order[t]=x.order[t].slice()});
  if(Array.isArray(x.custom))SET.custom=x.custom.filter(function(k){return k&&k.id&&(k.tab==="Itallap"||k.tab==="Étlap")}).map(function(k){return{id:k.id,tab:k.tab}});
@@ -595,7 +610,7 @@ document.addEventListener("click",function(e){if(!cat||cat.id!=="ebed"||!e.targe
 
 
 /* users, permissions, log */
-var PL=[["elfogyott","Elfogyott kapcsolók","Tételek"],["ar","Árak","Tételek"],["szoveg","Név, leírás, allergének","Tételek"],["uj","Új tétel felvétele","Tételek"],["torles","Tétel törlése","Tételek"],["rejt","Tétel elrejtése","Tételek"],["sorrend","Tételek sorrendje","Tételek"],["csempe","Név, ikon, forma, kiemelés","Csempék"],["csempe_rejt","Megjelenítés / elrejtés","Csempék"],["idozites","Időzítés","Csempék"],["csempe_sorrend","Csempék sorrendje","Csempék"],["kategoria","Új kategória, törlés","Csempék"],["heti","Heti ajánlat","Külön részek"],["ebed_menu","Bisztró ebéd heti menü","Külön részek"],["ebed_ar","Bisztró ebéd ára, napjai, ideje","Külön részek"]];
+var PL=[["elfogyott","Elfogyott kapcsolók","Tételek"],["ar","Árak","Tételek"],["szoveg","Név, leírás, allergének","Tételek"],["uj","Új tétel felvétele","Tételek"],["torles","Tétel törlése","Tételek"],["rejt","Tétel elrejtése","Tételek"],["sorrend","Tételek sorrendje","Tételek"],["csempe","Név, ikon, forma, kiemelés","Csempék"],["csempe_rejt","Megjelenítés / elrejtés","Csempék"],["idozites","Időzítés","Csempék"],["csempe_sorrend","Csempék sorrendje","Csempék"],["kategoria","Új kategória, törlés","Csempék"],["heti","Heti ajánlat","Külön részek"],["ebed_menu","Bisztró ebéd heti menü","Külön részek"],["ebed_ar","Bisztró ebéd ára, napjai, ideje","Külön részek"],["social","Közösségi linkek","Külön részek"]];
 function can(k){return!!(WHO&&(WHO.owner||WHO.main||(WHO.perms||[]).indexOf(k)>-1))}
 function boss(){return!!(WHO&&(WHO.owner||WHO.main))}
 function setWho(w){WHO=w||null;if(WHO)setTimeout(function(){tdLoad().catch(function(){})},1200);var b=document.body;PL.forEach(function(p){b.classList.toggle("nop-"+p[0],!can(p[0]))});b.classList.toggle("isboss",boss());
@@ -639,6 +654,12 @@ $("#lgf").onclick=function(e){var b=e.target.closest(".tc");if(!b)return;LF=b.da
 $("#b-log").onclick=function(){api({action:"log"}).then(function(d){if(!d.ok){toast(ERR[d.error]||"Hiba",true);return}LOG=d.log||[];LF="";renderLog();go("log")})};
 $("#l-back").onclick=function(){renderHome();go("home",true)};
 
+/* social links */
+var SK=["fb","ig","tt","g"];
+function closeS2(){$("#ssheet").classList.remove("on")}
+$("#b-soc").onclick=function(){var so=SET.social||{};SK.forEach(function(k){$("#s-"+k).value=so[k]||""});$("#ssheet").classList.add("on")};
+$("#sx").onclick=closeS2;$("#ssbg").onclick=closeS2;$("#s-no").onclick=closeS2;
+$("#s-ok").onclick=function(){var so={},bad=false;SK.forEach(function(k){var v=$("#s-"+k).value.trim();if(v&&!/^https?:\/\//i.test(v))v="https://"+v;if(v&&!/^https?:\/\/\S+$/i.test(v))bad=true;if(v)so[k]=v});if(bad){toast("Hibás link",true);return}SET.social=so;setSave();closeS2();toast("Linkek mentve")};
 /* own password */
 function closeP(){$("#psheet").classList.remove("on")}
 $("#b-pw").onclick=function(){$("#p-1").value="";$("#p-2").value="";$("#psheet").classList.add("on");setTimeout(function(){$("#p-1").focus()},400)};
@@ -646,26 +667,25 @@ $("#px").onclick=closeP;$("#psbg").onclick=closeP;$("#p-no").onclick=closeP;
 $("#p-ok").onclick=function(){var a=$("#p-1").value,b=$("#p-2").value;if(a.length<4){toast("Legalább 4 karakter kell",true);return}if(a!==b){toast("A két jelszó nem egyezik",true);return}
  api({action:"self_pw",newpw:a}).then(function(d){if(!d.ok){toast(ERR[d.error]||"Mentési hiba",true);return}PW=a;try{sessionStorage.setItem("szb-pw",PW)}catch(_){}closeP();toast("Jelszó módosítva")})};
 /* todos */
-var TD={todos:[],people:[],me:"",boss:false,to:"all"};
-function tdBadge(){var n=TD.todos.filter(function(t){return!t.done&&(t.to==="all"||t.to===TD.me)}).length;var b=$("#mbadge");b.hidden=!n;b.textContent=n}
+var TD={todos:[],people:[],me:"",boss:false,to:"all",f:"all"};
+function tdBadge(){var n=TD.todos.filter(function(t){return!t.done}).length;var b=$("#mbadge");b.hidden=!n;b.textContent=n}
 function tdLoad(a,extra){var body={action:a||"todos"};for(var k in extra)body[k]=extra[k];return api(body).then(function(d){if(!d.ok){toast(ERR[d.error]||"Hiba",true);return false}TD.todos=d.todos;TD.people=d.people;TD.me=d.me;TD.boss=d.boss;tdBadge();if(curS==="todo")renderTodos();return true})}
-function pName(id){if(id==="all")return"Mindenki";for(var i=0;i<TD.people.length;i++)if(TD.people[i].id===id)return TD.people[i].name;return"?"}
-function renderTodos(){var to=$("#td-to");to.innerHTML=[{id:"all"}].concat(TD.people).map(function(p){return'<button type="button" class="ach tc" data-id="'+p.id+'" aria-pressed="'+(TD.to===p.id)+'"></button>'}).join("");$$(".tc",to).forEach(function(b){b.textContent=pName(b.dataset.id)});
- var L=$("#tdlist");L.innerHTML="";var open=TD.todos.filter(function(t){return!t.done}),done=TD.todos.filter(function(t){return t.done});
- open.sort(function(a,b){var am=a.to===TD.me?0:1,bm=b.to===TD.me?0:1;return am-bm||((a.due||"9")<(b.due||"9")?-1:(a.due||"9")>(b.due||"9")?1:0)});done.sort(function(a,b){return a.done.t<b.done.t?1:-1});
- if(!TD.todos.length){L.innerHTML='<p class="muted" style="padding:14px">Nincs teendő.</p>';return}
- function item(t){var d=document.createElement("div");d.className="td glass"+(t.done?" ok":"")+(!t.done&&t.to===TD.me?" mine":"")+(!t.done&&t.due&&t.due<todayStr()?" late":"");d.dataset.id=t.id;
+function pName(id){if(id==="all")return"Mindenki";if(id==="me")return"Csak magamnak";for(var i=0;i<TD.people.length;i++)if(TD.people[i].id===id)return TD.people[i].name;return"?"}
+function renderTodos(){var src=TD.todos;
+ var L=$("#tdlist");L.innerHTML="";var open=src.filter(function(t){return!t.done}),done=src.filter(function(t){return t.done});
+ open.sort(function(a,b){return(a.due||"9")<(b.due||"9")?-1:(a.due||"9")>(b.due||"9")?1:(a.t<b.t?-1:1)});done.sort(function(a,b){return a.done.t<b.done.t?1:-1});
+ if(!src.length){L.innerHTML='<p class="muted" style="padding:14px">Nincs teendő.</p>';return}
+ function item(t){var d=document.createElement("div");d.className="td glass"+(t.done?" ok":"")+(!t.done&&t.due&&t.due<todayStr()?" late":"");d.dataset.id=t.id;
   var c=document.createElement("button");c.type="button";c.className="tdc";c.setAttribute("aria-label",t.done?"Visszanyitás":"Kész");c.innerHTML='<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';d.appendChild(c);
   var x=document.createElement("div");x.className="tdx";var p=document.createElement("p");p.textContent=t.text;x.appendChild(p);var m=document.createElement("small");
-  m.textContent=t.byName+" → "+(t.to===TD.me?"neked":pName(t.to))+(t.due?" · határidő: "+hd(t.due):"")+(t.done?" · kész: "+t.done.name+", "+tFmt(t.done.t):"");x.appendChild(m);d.appendChild(x);
-  if(TD.boss||t.by===TD.me){var del=document.createElement("button");del.type="button";del.className="tdd";del.setAttribute("aria-label","Törlés");del.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';d.appendChild(del)}
+  m.textContent=[t.due?"határidő: "+hd(t.due):"",t.done?"kész: "+tFmt(t.done.t):""].filter(Boolean).join(" · ");if(!m.textContent)m.hidden=true;x.appendChild(m);d.appendChild(x);
+  if(t.by===TD.me){var del=document.createElement("button");del.type="button";del.className="tdd";del.setAttribute("aria-label","Törlés");del.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';d.appendChild(del)}
   L.appendChild(d)}
  open.forEach(item);if(done.length){var c=document.createElement("div");c.className="cap";c.textContent="Kész";c.style.margin="18px 4px 8px";L.appendChild(c);done.forEach(item)}}
-$("#td-to").onclick=function(e){var b=e.target.closest(".tc");if(!b)return;TD.to=b.dataset.id;renderTodos()};
 $("#tdlist").onclick=function(e){var r=e.target.closest(".td");if(!r)return;var t=TD.todos.filter(function(x){return x.id===r.dataset.id})[0];if(!t)return;
  if(e.target.closest(".tdc")){tdLoad("todo_done",{id:t.id,done:!t.done}).then(function(ok){if(ok)toast(t.done?"Visszanyitva":"Kész")});return}
  var dl=e.target.closest(".tdd");if(dl){if(!dl.dataset.sure){dl.dataset.sure=1;dl.classList.add("sure");setTimeout(function(){if(dl.isConnected){delete dl.dataset.sure;dl.classList.remove("sure")}},2500);toast("Koppints még egyszer a törléshez");return}tdLoad("todo_del",{id:t.id}).then(function(ok){if(ok)toast("Törölve")})}};
-$("#td-add").onclick=function(){var t=$("#td-tx").value.trim();if(!t){$("#td-tx").focus();return}var b=this;b.disabled=true;tdLoad("todo_add",{text:t,to:TD.to,due:$("#td-due").value}).then(function(ok){b.disabled=false;if(ok){$("#td-tx").value="";$("#td-due").value="";toast("Hozzáadva")}}).catch(function(){b.disabled=false;toast("Nincs kapcsolat",true)})};
+$("#td-add").onclick=function(){var t=$("#td-tx").value.trim();if(!t){$("#td-tx").focus();return}var b=this;b.disabled=true;tdLoad("todo_add",{text:t,due:$("#td-due").value}).then(function(ok){b.disabled=false;if(ok){$("#td-tx").value="";$("#td-due").value="";toast("Hozzáadva")}}).catch(function(){b.disabled=false;toast("Nincs kapcsolat",true)})};
 $("#b-todo").onclick=function(){tdLoad().then(function(ok){if(ok){go("todo");renderTodos()}})};
 $("#t-back").onclick=function(){renderHome();go("home",true)};
 function closeE(){$("#sheet").classList.remove("on");E=null}
