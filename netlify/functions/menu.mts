@@ -327,27 +327,37 @@ export default async (req: Request, context: Context) => {
     await store.setJSON("log", log)
     return json({ ok: true })
   }
-  if (body.action === "msgs" || body.action === "msg_send" || body.action === "msg_read") {
+  if (body.action === "todos" || body.action === "todo_add" || body.action === "todo_done" || body.action === "todo_del") {
     const me = who.owner ? "owner" : who.id
-    let msgs: any[] = ((await store.get("msgs", { type: "json" })) as any[]) ?? []
+    let todos: any[] = ((await store.get("todos", { type: "json" })) as any[]) ?? []
     const people = [{ id: "owner", name: OWNER_LABEL }, ...users.filter((u) => u.active !== false).map((u) => ({ id: u.id, name: u.name }))]
-    if (body.action === "msg_send") {
-      const text = String(body.text ?? "").trim().slice(0, 1000)
+    const cut = Date.now() - 30 * 864e5
+    let ch = false
+    if (body.action === "todo_add") {
+      const text = String(body.text ?? "").trim().slice(0, 300)
       const to = String(body.to ?? "all")
-      if (!text) return json({ ok: false, error: "ures_uzenet" })
+      const due = typeof body.due === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.due) ? body.due : ""
+      if (!text) return json({ ok: false, error: "ures_teendo" })
       if (to !== "all" && !people.some((p) => p.id === to)) return json({ ok: false, error: "hibas_keres" })
-      msgs.push({ id: "m-" + Date.now().toString(36) + randomBytes(3).toString("hex"), t: new Date().toISOString(), from: me, fromName: who.name, to, text, read: [me] })
-      msgs = msgs.slice(-400)
-      await store.setJSON("msgs", msgs)
+      todos.push({ id: "t-" + Date.now().toString(36) + randomBytes(3).toString("hex"), t: new Date().toISOString(), by: me, byName: who.name, to, text, due, done: null })
+      ch = true
     }
-    if (body.action === "msg_read") {
-      let ch = false
-      for (const m of msgs) if ((m.to === "all" || m.to === me) && !m.read.includes(me)) { m.read.push(me); ch = true }
-      if (ch) await store.setJSON("msgs", msgs)
+    if (body.action === "todo_done") {
+      const t = todos.find((x) => x.id === body.id)
+      if (!t) return json({ ok: false, error: "nincs_ilyen" })
+      t.done = body.done ? { by: me, name: who.name, t: new Date().toISOString() } : null
+      ch = true
     }
-    const mine = msgs.filter((m) => m.to === "all" || m.to === me || m.from === me)
-    const unread = mine.filter((m) => !m.read.includes(me)).length
-    return json({ ok: true, me, people, unread, msgs: mine.slice(-150).map((m) => ({ id: m.id, t: m.t, from: m.from, fromName: m.fromName, to: m.to, text: m.text, unread: !m.read.includes(me) })) })
+    if (body.action === "todo_del") {
+      const t = todos.find((x) => x.id === body.id)
+      if (!t) return json({ ok: false, error: "nincs_ilyen" })
+      if (t.by !== me && !boss) return json({ ok: false, error: "nincs_jog" })
+      todos = todos.filter((x) => x.id !== body.id)
+      ch = true
+    }
+    const kept = todos.filter((x) => !x.done || Date.parse(x.done.t) > cut).slice(-300)
+    if (ch || kept.length !== todos.length) await store.setJSON("todos", kept)
+    return json({ ok: true, me, boss, people, todos: kept })
   }
   if (body.action === "owner_save") {
     if (!who.owner) return json({ ok: false, error: "nincs_jog" })
